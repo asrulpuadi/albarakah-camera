@@ -176,8 +176,19 @@
         "https://script.googleusercontent.com"
       ];
 
-      const isAllowed = parsedOrigin === "https://script.google.com" || /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/i.test(parsedOrigin);
+      const isAllowed =
+        parsedOrigin === "https://script.google.com" ||
+        (
+          parsedOrigin.startsWith("https://") &&
+          /^[a-z0-9-]+-script\.googleusercontent\.com$/i.test(
+            new URL(parsedOrigin).hostname
+          )
+        );
 
+      console.log("[DEBUG] parsedOrigin:", parsedOrigin);
+      console.log("[DEBUG] hostname:", new URL(parsedOrigin).hostname);
+      console.log("[DEBUG] isAllowed:", isAllowed);
+      
       if (!isAllowed) {
         status.textContent = "Origin formulir tidak diizinkan.";
         console.error("Origin ditolak:", parsedOrigin);
