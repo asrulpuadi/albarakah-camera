@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Al-Barakah - Capture Selfie</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 16px;
+      color: #1e293b;
+    }
+    h2 { color: #047857; }
+    video, canvas, #preview {
+      display: block;
+      width: 100%;
+      max-height: 420px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin: 12px 0;
+      background: #f1f5f9;
+    }
+    button {
+      padding: 12px 16px;
+      margin: 4px 2px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #047857;
+      color: white;
+    }
+    button:disabled { opacity: .5; }
+    #status { font-size: 14px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h2>Al-Barakah Syariah</h2>
+  <p>Ambil foto selfie untuk pengajuan pembiayaan.</p>
+
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas" class="hidden"></canvas>
+  <img id="preview" class="hidden" alt="Preview selfie">
+
+  <button id="start">Buka Kamera</button>
+  <button id="capture" disabled>Ambil Foto</button>
+  <button id="retake" class="hidden">Ulangi Foto</button>
+  <button id="stop" disabled>Tutup Kamera</button>
+
+  <p id="status" role="status">Kamera belum dibuka.</p>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const preview = document.getElementById("preview");
+    const status = document.getElementById("status");
+
+    let stream = null;
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      document.getElementById("start").disabled = false;
+      document.getElementById("capture").disabled = true;
+      document.getElementById("stop").disabled = true;
+    }
+
+    document.getElementById("start").onclick = async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Browser tidak menyediakan akses kamera.");
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        preview.classList.add("hidden");
+        video.classList.remove("hidden");
+        document.getElementById("start").disabled = true;
+        document.getElementById("capture").disabled = false;
+        document.getElementById("stop").disabled = false;
+        status.textContent = "Kamera aktif. Posisikan wajah di tengah.";
+      } catch (err) {
+        stopCamera();
+        console.error("Camera error:", err.name, err.message);
+        status.textContent =
+          "Kamera gagal: " + err.name + " — " + err.message;
+      }
+    };
+
+    document.getElementById("capture").onclick = () => {
+      if (!stream || !video.videoWidth) {
+        status.textContent = "Kamera belum siap.";
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(
+        video, 0, 0, canvas.width, canvas.height
+      );
+
+      preview.src = canvas.toDataURL("image/jpeg", 0.85);
+      preview.classList.remove("hidden");
+      video.classList.add("hidden");
+
+      document.getElementById("capture").disabled = true;
+      document.getElementById("retake").classList.remove("hidden");
+      status.textContent = "Foto berhasil diambil. Periksa preview.";
+      stopCamera();
+    };
+
+    document.getElementById("retake").onclick = () => {
+      preview.classList.add("hidden");
+      video.classList.remove("hidden");
+      document.getElementById("retake").classList.add("hidden");
+      document.getElementById("start").click();
+    };
+
+    document.getElementById("stop").onclick = () => {
+      stopCamera();
+      status.textContent = "Kamera ditutup.";
+    };
+
+    window.addEventListener("pagehide", stopCamera);
+  </script>
+</body>
+</html>
