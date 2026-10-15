@@ -138,48 +138,65 @@
     };
 
     document.getElementById("usePhoto").onclick = () => {
-      
       const params = new URLSearchParams(window.location.search);
-      
       const parentOrigin = params.get("parentOrigin");
-      
+    
+      if (
+        !preview.src ||
+        !preview.src.startsWith("data:image/jpeg;base64,")
+      ) {
+        status.textContent = "Ambil foto terlebih dahulu.";
+        return;
+      }
+
+      if (!parentOrigin || !window.opener || window.opener.closed) {
+        status.textContent =
+          "Jendela formulir tidak terhubung. Buka kamera dari formulir GAS.";
+        console.error("Parent:", window.opener, "Origin:", parentOrigin);
+        return;
+      }
+    
+      let parsedOrigin;
+
+      try {
+        parsedOrigin = new URL(parentOrigin).origin;
+      } catch (err) {
+        status.textContent = "Origin formulir tidak valid.";
+        console.error("Origin tidak valid:", parentOrigin);
+        return;
+      }
+
       const allowedOrigins = [
         "https://script.google.com",
         "https://script.googleusercontent.com"
       ];
-    
-      if (!preview.src.startsWith("data:image/jpeg;base64,")) {
-        status.textContent = "Ambil foto terlebih dahulu.";
-        return;
-      }
-    
-      if (!parentOrigin || !window.opener || window.opener.closed) {
-        status.textContent =
-          "Jendela formulir tidak terhubung. Buka kamera dari tombol pada formulir GAS.";
-        console.error("Parent:", window.opener, "Origin:", parentOrigin);
+
+      const isAllowed = allowedOrigins.some(origin =>
+        parsedOrigin === origin ||
+        parsedOrigin.endsWith(".script.googleusercontent.com")
+      );
+
+      if (!isAllowed) {
+        status.textContent = "Origin formulir tidak diizinkan.";
+        console.error("Origin ditolak:", parsedOrigin);
         return;
       }
 
-      if (!allowedOrigins.includes(parentOrigin)) {
-        status.textContent = "Origin formulir tidak valid.";
-        return;
-      }
-
-      console.log("Opener tersedia:", !!window.opener);
-      console.log("Opener tertutup:", window.opener?.closed);
-      console.log("Origin tujuan:", parentOrigin);
+      console.log("Origin tujuan:", parsedOrigin);
       console.log("Ukuran data foto:", preview.src.length);
 
       try {
-        window.opener.postMessage({
-          type: "ALBARAKAH_SELFIE_CAPTURED",
-          imageData: preview.src
-        }, parentOrigin);
+        window.opener.postMessage(
+          {
+            type: "ALBARAKAH_SELFIE_CAPTURED",
+            imageData: preview.src
+          },
+          parsedOrigin
+        );
     
         status.textContent =
-          "Pesan foto sudah dikirim. Periksa formulir GAS.";
-    
-        console.log("Pesan selfie dikirim ke:", parentOrigin);
+          "Pesan foto dikirim. Periksa preview formulir GAS.";
+        console.log("Pesan selfie dikirim.");
       } catch (err) {
         console.error("Gagal mengirim selfie:", err);
         status.textContent = "Gagal mengirim foto: " + err.message;
