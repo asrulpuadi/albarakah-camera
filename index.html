@@ -138,8 +138,15 @@
     };
 
     document.getElementById("usePhoto").onclick = () => {
+      
       const params = new URLSearchParams(window.location.search);
+      
       const parentOrigin = params.get("parentOrigin");
+      
+      const allowedOrigins = [
+        "https://script.google.com",
+        "https://script.googleusercontent.com"
+      ];
     
       if (!preview.src.startsWith("data:image/jpeg;base64,")) {
         status.textContent = "Ambil foto terlebih dahulu.";
@@ -153,7 +160,7 @@
         return;
       }
 
-      if (parentOrigin !== "https://script.google.com") {
+      if (!allowedOrigins.includes(parentOrigin)) {
         status.textContent = "Origin formulir tidak valid.";
         return;
       }
