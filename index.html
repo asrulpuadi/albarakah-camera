@@ -161,7 +161,12 @@
       try {
         parsedOrigin = new URL(parentOrigin).origin;
       } catch (err) {
-        status.textContent = "Origin formulir tidak valid.";
+        console.error("[DEBUG] parentOrigin mentah:", parentOrigin);
+        console.error("[DEBUG] parsedOrigin:", parsedOrigin);
+        console.error("[DEBUG] URL kamera:", window.location.href);
+        
+        status.textContent = "Origin tidak valid: " + String(parentOrigin);
+        
         console.error("Origin tidak valid:", parentOrigin);
         return;
       }
