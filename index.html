@@ -48,6 +48,7 @@
   <button id="start">Buka Kamera</button>
   <button id="capture" disabled>Ambil Foto</button>
   <button id="retake" class="hidden">Ulangi Foto</button>
+  <button id="usePhoto" class="hidden">Gunakan Foto Ini</button>
   <button id="stop" disabled>Tutup Kamera</button>
 
   <p id="status" role="status">Kamera belum dibuka.</p>
@@ -122,6 +123,8 @@
       document.getElementById("capture").disabled = true;
       document.getElementById("retake").classList.remove("hidden");
       status.textContent = "Foto berhasil diambil. Periksa preview.";
+
+      document.getElementById("usePhoto").classList.remove("hidden");
       stopCamera();
     };
 
@@ -130,6 +133,45 @@
       video.classList.remove("hidden");
       document.getElementById("retake").classList.add("hidden");
       document.getElementById("start").click();
+
+      document.getElementById("usePhoto").classList.add("hidden");
+    };
+
+    document.getElementById("usePhoto").onclick = () => {
+      if (!preview.src || !preview.src.startsWith("data:image/jpeg;base64,")) {
+        status.textContent = "Ambil foto terlebih dahulu.";
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const parentOrigin = params.get("parentOrigin");
+    
+      if (!parentOrigin || !window.opener || window.opener.closed) {
+        status.textContent = "Formulir pengajuan tidak ditemukan. Tutup halaman ini dan coba lagi.";
+        return;
+      }
+
+      // Izinkan hanya origin GAS yang dikirim oleh halaman pembuka.
+      const allowedOrigins = [
+        "https://script.google.com",
+        "https://script.googleusercontent.com"
+      ];
+
+      if (!allowedOrigins.includes(parentOrigin)) {
+        status.textContent = "Origin formulir tidak valid.";
+        return;
+      }
+
+      window.opener.postMessage(
+        {
+          type: "ALBARAKAH_SELFIE_CAPTURED",
+          imageData: preview.src
+        },
+        parentOrigin
+      );
+
+      status.textContent = "Foto dikirim ke formulir pengajuan.";
+      window.close();
     };
 
     document.getElementById("stop").onclick = () => {
