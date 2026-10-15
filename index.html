@@ -176,10 +176,7 @@
         "https://script.googleusercontent.com"
       ];
 
-      const isAllowed = allowedOrigins.some(origin =>
-        parsedOrigin === origin ||
-        parsedOrigin.endsWith(".script.googleusercontent.com")
-      );
+      const isAllowed = parsedOrigin === "https://script.google.com" || /^https:\/\/[a-z0-9-]+-script\.googleusercontent\.com$/i.test(parsedOrigin);
 
       if (!isAllowed) {
         status.textContent = "Origin formulir tidak diizinkan.";
