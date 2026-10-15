@@ -157,41 +157,40 @@
       }
     
       let parsedOrigin;
+      let parsedUrl;
 
       try {
-        parsedOrigin = new URL(parentOrigin).origin;
+        parsedUrl = new URL(parentOrigin);
+
+        if (parsedUrl.protocol !== "https:") {
+          throw new Error("Origin harus menggunakan HTTPS.");
+        }
+
+        parsedOrigin = parsedUrl.origin;
       } catch (err) {
-        console.error("[DEBUG] parentOrigin mentah:", parentOrigin);
-        console.error("[DEBUG] parsedOrigin:", parsedOrigin);
-        console.error("[DEBUG] URL kamera:", window.location.href);
-        
         status.textContent = "Origin tidak valid: " + String(parentOrigin);
-        
-        console.error("Origin tidak valid:", parentOrigin);
+        console.error("[DEBUG] parentOrigin:", parentOrigin);
+        console.error("[DEBUG] Error:", err);
         return;
       }
 
-      const allowedOrigins = [
-        "https://script.google.com",
-        "https://script.googleusercontent.com"
-      ];
+      const host = parsedUrl.hostname;
 
       const isAllowed =
-        parsedOrigin === "https://script.google.com" ||
+        host === "script.google.com" ||
         (
-          parsedOrigin.startsWith("https://") &&
-          /^[a-z0-9-]+-script\.googleusercontent\.com$/i.test(
-            new URL(parsedOrigin).hostname
-          )
+          host.endsWith("-script.googleusercontent.com") &&
+          host.length > "-script.googleusercontent.com".length
         );
 
+      console.log("[DEBUG] parentOrigin:", parentOrigin);
       console.log("[DEBUG] parsedOrigin:", parsedOrigin);
-      console.log("[DEBUG] hostname:", new URL(parsedOrigin).hostname);
+      console.log("[DEBUG] hostname:", host);
       console.log("[DEBUG] isAllowed:", isAllowed);
-      
+
       if (!isAllowed) {
         status.textContent = "Origin formulir tidak diizinkan.";
-        console.error("Origin ditolak:", parsedOrigin);
+        console.error("[DEBUG] Origin ditolak:", parsedOrigin);
         return;
       }
 
