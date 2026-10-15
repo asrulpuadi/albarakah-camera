@@ -162,16 +162,26 @@
         return;
       }
 
-      window.opener.postMessage(
-        {
-          type: "ALBARAKAH_SELFIE_CAPTURED",
-          imageData: preview.src
-        },
-        parentOrigin
-      );
+      const payload = {
+        type: "ALBARAKAH_SELFIE_CAPTURED",
+        imageData: preview.src
+      };
 
-      status.textContent = "Foto dikirim ke formulir pengajuan.";
-      window.close();
+      status.textContent = "Mengirim foto ke formulir GAS...";
+
+      try {
+        window.opener.postMessage(payload, parentOrigin);
+      
+        status.textContent =
+          "Pesan terkirim. Periksa apakah preview muncul di formulir GAS.";
+      
+        console.log("Origin tujuan:", parentOrigin);
+        console.log("Ukuran data foto:", payload.imageData.length);
+      } catch (err) {
+        console.error("Gagal mengirim foto:", err);
+        status.textContent = "Gagal mengirim foto: " + err.message;
+      }
+      
     };
 
     document.getElementById("stop").onclick = () => {
