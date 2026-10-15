@@ -158,6 +158,11 @@
         return;
       }
 
+      console.log("Opener tersedia:", !!window.opener);
+      console.log("Opener tertutup:", window.opener?.closed);
+      console.log("Origin tujuan:", parentOrigin);
+      console.log("Ukuran data foto:", preview.src.length);
+
       try {
         window.opener.postMessage({
           type: "ALBARAKAH_SELFIE_CAPTURED",
