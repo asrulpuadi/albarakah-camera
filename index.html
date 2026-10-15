@@ -138,50 +138,40 @@
     };
 
     document.getElementById("usePhoto").onclick = () => {
-      if (!preview.src || !preview.src.startsWith("data:image/jpeg;base64,")) {
-        status.textContent = "Ambil foto terlebih dahulu.";
-        return;
-      }
-
       const params = new URLSearchParams(window.location.search);
       const parentOrigin = params.get("parentOrigin");
     
+      if (!preview.src.startsWith("data:image/jpeg;base64,")) {
+        status.textContent = "Ambil foto terlebih dahulu.";
+        return;
+      }
+    
       if (!parentOrigin || !window.opener || window.opener.closed) {
-        status.textContent = "Formulir pengajuan tidak ditemukan. Tutup halaman ini dan coba lagi.";
+        status.textContent =
+          "Jendela formulir tidak terhubung. Buka kamera dari tombol pada formulir GAS.";
+        console.error("Parent:", window.opener, "Origin:", parentOrigin);
         return;
       }
 
-      // Izinkan hanya origin GAS yang dikirim oleh halaman pembuka.
-      const allowedOrigins = [
-        "https://script.google.com",
-        "https://script.googleusercontent.com"
-      ];
-
-      if (!allowedOrigins.includes(parentOrigin)) {
+      if (parentOrigin !== "https://script.google.com") {
         status.textContent = "Origin formulir tidak valid.";
         return;
       }
 
-      const payload = {
-        type: "ALBARAKAH_SELFIE_CAPTURED",
-        imageData: preview.src
-      };
-
-      status.textContent = "Mengirim foto ke formulir GAS...";
-
       try {
-        window.opener.postMessage(payload, parentOrigin);
-      
+        window.opener.postMessage({
+          type: "ALBARAKAH_SELFIE_CAPTURED",
+          imageData: preview.src
+        }, parentOrigin);
+    
         status.textContent =
-          "Pesan terkirim. Periksa apakah preview muncul di formulir GAS.";
-      
-        console.log("Origin tujuan:", parentOrigin);
-        console.log("Ukuran data foto:", payload.imageData.length);
+          "Pesan foto sudah dikirim. Periksa formulir GAS.";
+    
+        console.log("Pesan selfie dikirim ke:", parentOrigin);
       } catch (err) {
-        console.error("Gagal mengirim foto:", err);
+        console.error("Gagal mengirim selfie:", err);
         status.textContent = "Gagal mengirim foto: " + err.message;
       }
-      
     };
 
     document.getElementById("stop").onclick = () => {
